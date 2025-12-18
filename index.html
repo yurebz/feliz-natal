@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comunicado Oficial</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Mountains+of+Christmas:wght@700&family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --envelope-color: #c0392b;
+            --envelope-inside: #e74c3c;
+            --paper-color: #fffdf0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a; 
+            color: white;
+            height: 100vh;
+            width: 100vw;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        #app {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; 
+            pointer-events: none;
+        }
+        
+        #app canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #dummy-events { display: none; }
+
+        .hidden { display: none !important; }
+        .fade-out { animation: fadeOut 1s forwards; pointer-events: none; }
+        .fade-in { animation: fadeIn 1.5s forwards; }
+
+        @keyframes fadeOut { to { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #scene-tree {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        svg {
+            width: 80vw;
+            max-width: 320px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(46, 204, 113, 0.3));
+            overflow: visible;
+        }
+
+        .tree-path {
+            fill: none;
+            stroke: #2ecc71;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            animation: drawTree 5s ease-in-out forwards;
+        }
+
+        .star {
+            fill: #f1c40f;
+            opacity: 0;
+            transform-box: fill-box;
+            transform-origin: center;
+            transform: scale(0.7); 
+            animation: starAppear 1s forwards 5s, starPulse 2s infinite alternate 6s;
+        }
+
+        .light {
+            fill: #fff;
+            opacity: 0;
+            animation: lightsOn 0.5s forwards 5.5s, blink 1s infinite alternate;
+        }
+        .light:nth-child(even) { fill: #e74c3c; animation-delay: 5.5s, 0s; }
+        .light:nth-child(odd) { fill: #3498db; animation-delay: 5.7s, 0.5s; }
+
+        @keyframes drawTree { to { stroke-dashoffset: 0; } }
+        @keyframes starAppear { to { opacity: 1; transform: scale(0.7); } }
+        @keyframes starPulse { from { transform: scale(0.7); filter: drop-shadow(0 0 5px gold); } to { transform: scale(0.8); filter: drop-shadow(0 0 15px gold); } }
+        @keyframes lightsOn { to { opacity: 1; } }
+        @keyframes blink { from { filter: brightness(1); } to { filter: brightness(2.5); } }
+
+        .title-msg {
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            color: #e74c3c;
+            text-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+            opacity: 0;
+            margin-top: -10px;
+            animation: textUp 2s forwards 6s;
+        }
+        @keyframes textUp { to { opacity: 1; transform: translateY(-10px); } }
+
+        #scene-button {
+            z-index: 9999;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            pointer-events: none; 
+        }
+        .btn-open {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+            font-family: 'Mountains of Christmas', cursive;
+            transition: 0.3s;
+            touch-action: manipulation;
+            pointer-events: auto; 
+        }
+        .btn-open:active { transform: scale(0.95); }
+
+        #scene-envelope {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            width: 90vw;
+            max-width: 400px;
+            height: 60vw;
+            max-height: 250px;
+            margin-top: 50px;
+            pointer-events: auto;
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: var(--envelope-color);
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .lid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--envelope-inside);
+            clip-path: polygon(0 0, 50% 50%, 100% 0);
+            transform-origin: top;
+            transition: transform 1s ease-in-out;
+            z-index: 4;
+        }
+        .lid.open { transform: rotateX(180deg); z-index: 1; }
+
+        .pocket-left { position:absolute; width:100%; height:100%; background: #b93527; clip-path: polygon(0 0, 50% 50%, 0 100%); z-index: 3;}
+        .pocket-right { position:absolute; width:100%; height:100%; background: #b93527; clip-path: polygon(100% 0, 50% 50%, 100% 100%); z-index: 3;}
+        .pocket-bottom { position:absolute; width:100%; height:100%; background: #a93226; clip-path: polygon(0 100%, 50% 50%, 100% 100%); z-index: 4;}
+
+        .letter {
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            background: var(--paper-color);
+            border-radius: 5px;
+            transition: all 1s ease-in-out;
+            z-index: 2;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #444;
+            text-align: center;
+            overflow: hidden;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .letter.out { transform: translateY(-120px); z-index: 5; }
+
+        .letter.expanded {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: none;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99999;
+            border-radius: 0;
+            padding: 40px 20px;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            border: 5px solid #c0392b;
+            pointer-events: auto;
+        }
+
+        .letter-content {
+            max-width: 650px;
+            margin: 0 auto;
+            padding-bottom: 80px; 
+        }
+
+        .letter-content h2 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.2rem;
+            color: #c0392b;
+            margin-bottom: 25px;
+            line-height: 1.2;
+        }
+        
+        .letter-content p {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            text-align: justify;
+            color: #333;
+        }
+
+        .letter-content strong {
+            color: #c0392b;
+        }
+
+        .final-wish {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3rem;
+            color: #c0392b;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .heart-anim {
+            color: #e74c3c;
+            font-size: 3rem;
+            display: inline-block;
+            margin: 15px 0;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-special-gift {
+            display: inline-block;
+            text-decoration: none; 
+            margin-top: 10px;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+            padding: 15px 35px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(192, 57, 43, 0.3);
+            border: none;
+        }
+
+        .btn-special-gift:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(192, 57, 43, 0.5);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app"></div>
+    <div id="dummy-events"></div>
+
+    <audio id="natal-audio" src="musica.mp3" preload="auto" autoplay loop></audio>
+
+    <div id="scene-tree">
+        <svg viewBox="0 0 300 400">
+            <path class="tree-path" d="M150 50 L170 90 H160 L190 140 H170 L210 200 H180 L230 280 H70 L120 200 H90 L130 140 H110 L130 90 H120 Z" />
+            <polygon class="star" points="150,20 160,45 185,45 165,60 175,85 150,70 125,85 135,60 115,45 140,45" />
+            <circle cx="160" cy="90" r="4" class="light" />
+            <circle cx="140" cy="90" r="4" class="light" />
+            <circle cx="190" cy="140" r="4" class="light" />
+            <circle cx="110" cy="140" r="4" class="light" />
+            <circle cx="210" cy="200" r="4" class="light" />
+            <circle cx="90" cy="200" r="4" class="light" />
+            <circle cx="150" cy="170" r="4" class="light" />
+            <circle cx="150" cy="240" r="4" class="light" />
+            <circle cx="120" cy="280" r="4" class="light" />
+            <circle cx="180" cy="280" r="4" class="light" />
+        </svg>
+        <h1 class="title-msg">Feliz Natal!</h1>
+    </div>
+
+    <div id="scene-button" class="hidden">
+        <button class="btn-open" id="start-button">🎁 Abrir</button>
+    </div>
+
+    <div id="scene-envelope" class="hidden">
+        <div class="envelope-wrapper">
+            <div class="envelope">
+                <div class="lid" id="lid"></div>
+                <div class="letter" id="letter">
+                    <div class="letter-content">
+                        <h2>Queridos familiares, amigos, conhecidos, simpatizantes e inimigos.</h2>
+                        
+                        <p>É com imenso prazer (e uma dose considerável de preguiça de digitar mensagem por mensagem no WhatsApp) que venho através deste código (sim, eu programei um site inteiro só pra isso) desejar boas festas.</p>
+                        
+                        <p>Sobrevivemos a mais um ano. Se você recebeu este link, parabéns! Você passou na minha triagem anual de pessoas que merecem receber um cartão digital com borboletas brilhantes e música de fundo. Sintam-se honrados.</p>
+                        
+                        <p>Para a <strong>família</strong>: Sim, eu continuo solteiro e não, não sei quando vou ficar rico. Agradeço a preocupação, mas meu único compromisso sério no momento é com a minha própria paz de espírito e em ser feliz. E por favor, vamos maneirar na uva passa no arroz esse ano, ninguém merece mastigar fruta seca achando que é azeitona.</p>
+
+                        <p>Para os <strong>amigos</strong>: Obrigado por me aturarem. Prometo que ano que vem serei uma pessoa melhor, ou pelo menos tentarei ser tão rico quanto vocês acham que eu sou quando me chamam pra sair para os lugares. E aquele churrasco que a gente marca desde 2019? 2025 é o ano. Eu acredito (mentira).</p>
+
+                        <p>Para os <strong>conhecidos e simpatizantes</strong>: Agradeço por reagirem aos meus stories com "foguinho" ou "coração". Vocês mantêm meu engajamento alto e meu ego devidamente inflado. Continuem assim, o algoritmo agradece.</p>
+
+                        <p>Para os <strong>inimigos</strong>: Desejo que em 2026 você encontre tanta paz e felicidade que nem tenha tempo de lembrar que eu existo. Sigo focado em crescer com humildade (eu tento), cultivando só o que faz bem. Que o novo ano traga luz para todos nós, porque ressentimento não enche barriga e nem traz alegria!</p>
+
+                        <p>E olha, falando sério agora (para não dizer que eu não avisei): eu não sou a pessoa mais expressiva do mundo e admito que me enrolo para falar de sentimentos. Mas, à minha maneira, eu valorizo muito quem está por perto e faz parte da minha vida. Eu sou aquele que demonstra afeto zoando vocês ou mandando vídeo de memes, porque eu prefiro mil vezes ouvir do que falar sobre o que sinto. Mas saibam que vocês são a base de tudo o que eu faço. Sem o apoio e a amizade de cada um, eu estaria bem perdido.</p>
+
+                        <p>Brincadeiras à parte, que o Natal de vocês seja incrível. Comam até passar mal (é a única época que pode), abracem quem importa e que o Ano Novo traga pix na conta, saúde no corpo e paz na alma.</p>
+
+                        <p>Mas, acima de qualquer código, presente ou piada, não posso deixar de lembrar o verdadeiro motivo desta data: <strong>Jesus</strong>. Que o nascimento Dele traga uma "atualização" de esperança e fé para o seu coração. Que a luz de Cristo ilumine o caminho de vocês em 2026, guiando cada passo, protegendo suas famílias e trazendo aquela paz que excede todo o entendimento (e que nenhuma tecnologia consegue emular).</p>
+                        
+                        <h2 class="final-wish">Feliz Natal!</h2>
+
+                        <p style="text-align: right; font-weight: bold;">Do seu garoto de programa favorito, <br> Yure</p>
+                        
+                        <br>
+                        <div style="text-align: center;">
+                            <span class="heart-anim">❤</span>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <a href="imagem.jpg" class="btn-special-gift">
+                                🎁 Presente especial para você
+                            </a>
+                        </div>
+                        <br><br>
+                        <p style="font-size: 0.7rem; color: #aaa; text-align: center;">(Desenvolvido com muito café e falta de sono)</p>
+                    </div>
+                </div>
+                <div class="pocket-left"></div>
+                <div class="pocket-right"></div>
+                <div class="pocket-bottom"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { butterfliesBackground } from 'https://unpkg.com/threejs-toys@0.0.8/build/threejs-toys.module.cdn.min.js'
+
+        const pc = butterfliesBackground({
+            el: document.getElementById('app'),
+            eventsEl: document.getElementById('dummy-events'), 
+            gpgpuSize: 18,
+            background: 0x0f172a, 
+            material: 'phong',
+            lights: [
+                { type: 'ambient', params: [0xffffff, 0.5] },
+                { type: 'directional', params: [0xffffff, 1], props: { position: [10, 0, 0] } }
+            ],
+            materialParams: { transparent: true, alphaTest: 0.5 },
+            texture: 'https://assets.codepen.io/33787/butterflies.png',
+            textureCount: 4,
+            wingsScale: [2, 2, 2],
+            wingsWidthSegments: 16,
+            wingsHeightSegments: 16,
+            wingsSpeed: 0.75,
+            wingsDisplacementScale: 1.25,
+            noiseCoordScale: 0.01,
+            noiseTimeCoef: 0.0005,
+            noiseIntensity: 0.0025,
+            attractionRadius1: 100,
+            attractionRadius2: 150,
+            maxVelocity: 0.1
+        })
+    </script>
+
+    <script>
+        const audio = document.getElementById("natal-audio");
+        audio.volume = 0.5;
+
+        window.addEventListener('load', () => {
+            audio.play().catch(e => console.log("Autoplay bloqueado."));
+        });
+
+        document.body.addEventListener('click', () => {
+            if(audio.paused) audio.play().catch(e => {});
+        }, { once: true });
+
+
+        const sceneTree = document.getElementById('scene-tree');
+        const sceneButton = document.getElementById('scene-button');
+        const sceneEnvelope = document.getElementById('scene-envelope');
+        const lid = document.getElementById('lid');
+        const letter = document.getElementById('letter');
+        const startButton = document.getElementById("start-button");
+
+        setTimeout(() => {
+            sceneTree.classList.add('fade-out');
+            setTimeout(() => {
+                sceneTree.classList.add('hidden');
+                sceneButton.classList.remove('hidden');
+                sceneButton.classList.add('fade-in');
+            }, 1000);
+        }, 8000);
+
+        startButton.addEventListener("click", () => {
+            
+            if(audio.paused) {
+                audio.play().catch(e => {});
+            }
+
+            sceneButton.classList.add('fade-out');
+
+            setTimeout(() => {
+                sceneButton.classList.add('hidden');
+                sceneEnvelope.classList.remove('hidden');
+                sceneEnvelope.style.display = 'flex'; 
+                sceneEnvelope.classList.add('fade-in');
+
+                setTimeout(() => {
+                    lid.classList.add('open');
+                    setTimeout(() => {
+                        letter.classList.add('out');
+                        setTimeout(() => {
+                            letter.classList.add('expanded');
+                        }, 1000); 
+                    }, 800);
+                }, 1000);
+            }, 1000);
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const nomeDestino = urlParams.get('nome');
+        if (nomeDestino) {
+            document.querySelector('.letter-content h2').innerText = `Querido(a) ${nomeDestino},`;
+        }
+    </script>
+</body>
+</html>
